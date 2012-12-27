@@ -76,7 +76,7 @@ namespace StoreEngine
 
             _container.CreateContainer(localAddress, ApplicationDataCreateDisposition.Always);
 
-            foreach (var name in GetPersistantNames(localAddress))
+            foreach (var name in GetPersistantValueNames(localAddress))
                 _container.Containers[localAddress].Values.Add(name, string.Empty);
         }
 
@@ -96,7 +96,7 @@ namespace StoreEngine
 
             var containerObject = _container.Containers[localAddress];
 
-            foreach (var name in GetPersistantNames(localAddress))
+            foreach (var name in GetPersistantValueNames(localAddress))
                 SetPersistantValue(localAddress, name, containerObject.Values[name] as string);
         }
 
@@ -116,7 +116,7 @@ namespace StoreEngine
 
             var containerObject = _container.Containers[localAddress];
 
-            foreach (var name in GetPersistantNames(localAddress))
+            foreach (var name in GetPersistantValueNames(localAddress))
                 containerObject.Values[name] = GetPersistantValue(localAddress, name);
         }
 

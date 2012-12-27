@@ -57,9 +57,39 @@ namespace StoreEngine
     {
         internal object _initValue = null;
 
-        public PersistValue() { }
+        public PersistValue() {}
         public PersistValue(object initValue) { _initValue = initValue; }
     }
+
+    [AttributeUsage(AttributeTargets.Property)]
+    public class PersistDictionary : Attribute
+    {
+        internal object _initValue = null;
+
+        public PersistDictionary() { }
+    }
+
+    #region Converter
+
+    public interface IObjectConverter
+    {
+        string ToString(object obj);
+        object FromString(string str);
+    }
+
+    public class ObjectConverterBool : IObjectConverter
+    {
+        public string ToString(object obj) { return Convert.ToString((bool)obj); }
+        public object FromString(string str) { return Convert.ToBoolean(str); }
+    }
+
+    public class ObjectConverterInt : IObjectConverter
+    {
+        public string ToString(object obj) { return Convert.ToString((int)obj); }
+        public object FromString(string str) { return Convert.ToInt32(str); }
+    }
+
+    #endregion
 
     public class ObjectContainer
     {
@@ -101,7 +131,7 @@ namespace StoreEngine
 
     #endregion
 
-    #region Addressable base
+    #region Addressable
 
     public class IStoreAddressable<T>
     {
@@ -181,6 +211,7 @@ namespace StoreEngine
     public abstract class IStoreProvider : IStoreAddressable<ObjectContainer>
     {
         protected string _containerPath;
+        private Dictionary<Type, IObjectConverter> _converter = new Dictionary<Type, IObjectConverter>();
 
         public IStoreProvider(string containerPath)
         {
@@ -188,6 +219,10 @@ namespace StoreEngine
                 throw new Exception("Store provider error: Empty location");
 
             _containerPath = containerPath;
+
+            AddConverter(typeof(bool), new ObjectConverterBool());
+            AddConverter(typeof(int), new ObjectConverterInt());
+
 
             ContainerLoad();
         }
@@ -356,7 +391,16 @@ namespace StoreEngine
             return persist.Type;
         }
 
-        internal List<string> GetPersistantNames(string localAddress)
+        #endregion
+
+        #region Values
+
+        protected void AddConverter(Type type, IObjectConverter converter)
+        {
+            _converter.Add(type, converter);
+        }
+
+        internal List<string> GetPersistantValueNames(string localAddress)
         {
             var names = new List<string>();
 
@@ -379,24 +423,23 @@ namespace StoreEngine
             var property = type.GetRuntimeProperty(name);
             if (property != null)
             {
-                if (property.PropertyType == typeof(string))
+                if( property.PropertyType == typeof(string) )
                 {
-                    value = property.GetValue(_objects[localAddress].Data) as string;
-                }
-                else if (property.PropertyType == typeof(bool))
-                {
-                    bool boolVal = (bool)property.GetValue(_objects[localAddress].Data);
-                    value = Convert.ToString(boolVal);
-                }
-                else if (property.PropertyType == typeof(int))
-                {
-                    int intVal = (int)property.GetValue(_objects[localAddress].Data);
-                    value = Convert.ToString(intVal);
+                    value = (string)property.GetValue(_objects[localAddress].Data);
                 }
                 else if (property.PropertyType.GetTypeInfo().IsEnum)
                 {
                     int enumVal = (int)property.GetValue(_objects[localAddress].Data);
                     value = Convert.ToString(enumVal);
+                }
+                else
+                {
+                    if(!_converter.ContainsKey(property.PropertyType))
+                        throw new Exception("Missing converter");
+
+                    var converter = _converter[property.PropertyType];
+
+                    value = converter.ToString(property.GetValue(_objects[localAddress].Data));
                 }
             }
 
@@ -416,17 +459,18 @@ namespace StoreEngine
                 {
                     property.SetValue(_objects[localAddress].Data, value);
                 }
-                else if (property.PropertyType == typeof(bool))
-                {
-                    property.SetValue(_objects[localAddress].Data, Convert.ToBoolean(value));
-                }
-                else if (property.PropertyType == typeof(int))
-                {
-                    property.SetValue(_objects[localAddress].Data, Convert.ToInt32(value));
-                }
                 else if (property.PropertyType.GetTypeInfo().IsEnum)
                 {
                     property.SetValue(_objects[localAddress].Data, Convert.ToInt32(value));
+                }
+                else
+                {
+                    if (!_converter.ContainsKey(property.PropertyType))
+                        throw new Exception("Missing converter");
+
+                    var converter = _converter[property.PropertyType];
+
+                    property.SetValue(_objects[localAddress].Data, converter.FromString(value));
                 }
             }
         }

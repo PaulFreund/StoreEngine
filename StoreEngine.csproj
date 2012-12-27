@@ -104,9 +104,9 @@
   <ItemGroup>
     <Compile Include="Interfaces.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Sources\IStoreProviderFile.cs" />
-    <Compile Include="Sources\IStoreProviderFolder.cs" />
-    <Compile Include="Sources\IStoreProviderLocalStorage.cs" />
+    <Compile Include="Provider\IStoreProviderFile.cs" />
+    <Compile Include="Provider\IStoreProviderFolder.cs" />
+    <Compile Include="Provider\IStoreProviderLocalStorage.cs" />
     <Compile Include="Store.cs" />
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '11.0' ">

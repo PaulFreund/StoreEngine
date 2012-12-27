@@ -97,7 +97,7 @@ namespace StoreEngine
             XElement newEle = new XElement(_xmlStoreObject);
             newEle.Add(new XAttribute(_xmlStoreObjectName, localAddress));
 
-            foreach (var name in GetPersistantNames(localAddress))
+            foreach (var name in GetPersistantValueNames(localAddress))
                 newEle.Add(new XElement(XName.Get(name)));
 
             _container.Root.Add(newEle);
@@ -116,7 +116,7 @@ namespace StoreEngine
             if (element == null)
                 throw new Exception("Could not load object");
 
-            foreach (var name in GetPersistantNames(localAddress))
+            foreach (var name in GetPersistantValueNames(localAddress))
                 SetPersistantValue(localAddress, name, GetXMLObjectValue(element, name));
         }
 
@@ -132,7 +132,7 @@ namespace StoreEngine
             if (element == null)
                 throw new Exception("Could not load object");
 
-            foreach (var name in GetPersistantNames(localAddress))
+            foreach (var name in GetPersistantValueNames(localAddress))
                 SetXMLObjectValue(element, name, GetPersistantValue(localAddress, name));
 
             SaveFile();
